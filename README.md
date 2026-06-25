@@ -27,19 +27,19 @@ python -m http.server 8000
 1. github.com → **New repository** → 이름 `kazu` (Public), README/.gitignore 없이 빈 리포로 생성
 2. 원격 연결 후 푸시:
    ```bash
-   git remote add origin https://github.com/nsaosulfate/kazu.git
+   git remote add origin https://github.com/ClayborneYeounjunLee/kazu.git
    git push -u origin main
    ```
 3. 리포 **Settings → Pages → Build and deployment**
    - Source: **Deploy from a branch**
    - Branch: **main** / **/(root)** → Save
-4. 1~2분 뒤 공개 주소: **https://nsaosulfate.github.io/kazu/**
+4. 1~2분 뒤 공개 주소: **https://clayborneyeounjunlee.github.io/kazu/**
 
 > GitHub Desktop을 쓰면: Add → Add Existing Repository로 이 폴더를 추가 → Publish repository → 위 3번 Pages 설정만 하면 됩니다.
 
 ## ☁️ Google 로그인 / 클라우드 동기화 (선택)
 카나데와 **같은 Firebase 프로젝트**(`japanese-site-a0af9`)를 재사용합니다. 데이터는 카나데(`users/{uid}`)와 분리된
-컬렉션 **`kazu/{uid}`** 에 저장됩니다. 도메인(`nsaosulfate.github.io`)은 이미 카나데에서 승인돼 있어 추가 설정이 필요 없고,
+컬렉션 **`kazu/{uid}`** 에 저장됩니다. 도메인(`clayborneyeounjunlee.github.io`)은 이미 카나데에서 승인돼 있어 추가 설정이 필요 없고,
 **Firestore 규칙 1줄만** 추가하면 로그인+동기화가 켜집니다.
 
 Firebase Console → 해당 프로젝트 → **Firestore Database → 규칙(Rules)** 에 아래 블록을 추가:
