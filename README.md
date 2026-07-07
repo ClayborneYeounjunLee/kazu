@@ -1,11 +1,79 @@
-# Kazu (카즈) — Japanese Number Learning
+# Kazu (数 · 카즈) — Japanese Numbers, Counters & Dates
+
+> **Learn Japanese numbers, counters and date/time readings "one at a time"** — now as a **Duolingo-style game**: hearts, combos and streaks on top of flashcard practice, 6-choice quizzes, focused review of missed items, category number charts, pronunciation playback (TTS), an activity heatmap, and error-rate statistics. Korean/English UI, dark mode, zero build step. Usable as a guest, with **Google sign-in + Firestore cloud sync** across devices.
+
+🔗 **Live:** https://kazu.clayborne.dev/
+📦 **Repository:** https://github.com/ClayborneYeounjunLee/kazu
+
+---
+
+## 🎮 v2 — Duolingo-style renewal (2026-07)
+
+`index.html` is now the app itself: a complete visual/UX renewal in the same bold *hinomaru* style as [Kanade](https://kanade.clayborne.dev/) v2 (Jua · M PLUS Rounded 1c webfonts), shipped as plain static files.
+
+**Screens (9):** intro · home · study setup · practice · quiz · review · result · number charts · my page
+
+### Gamification
+- ❤️ **5 hearts per quiz session** — a wrong answer costs one heart; running out ends the session early.
+- 🔥 **Combo** counter with a saved best-combo record, plus the daily **study streak**.
+- Session progress bar and a result screen with a per-card recap.
+
+### Carried over from v1
+- Full **270-card** set across **24 parts**: numbers (0–10 · tens · hundreds · thousands · 万/億), 13 counters (～つ·個·人·本·枚·匹·台·冊·歳·杯·階·回·円), date & time (月·日·曜日·時·分·時間) — including all sound changes (さんびゃく·ろっぴゃく·はっせん…) and irregular readings (ついたち·はたち·とお…).
+- **Card model:** `{num, kanji, kana, roma, kor, note}`; the stats key is **`part + ":" + num`** (e.g. `"hyaku:300"`), unchanged from v1 so existing records carry over.
+- **3 question modes:** `number → reading` / `reading → number` / `random mix`. Long readings/options shrink automatically to fit the card.
+- Quiz distractors **never share a reading with the answer** (e.g. 1階/1回 are both いっかい — only one can appear).
+- **List-style number chart** with category tabs (numbers/counters/date·time), a "show readings" switch for self-testing (tap a row to peek + hear it), and per-row notes — with a **complete English translation table for every note** (v1 only translated a few).
+- **KO/EN** toggle, **dark mode**, **TTS** via the Web Speech API (`ja-JP`, rate 0.85) on practice reveal, quiz answer and chart rows.
+- **Keyboard shortcuts:** Space/Enter = reveal/next, X = "didn't know", 1–6 = quiz choices.
+- Review rule: items **seen ≥ 3 times with an error rate ≥ 30%**.
+
+### Accounts & sync
+- **Google sign-in (Firebase Auth)** with `signInWithPopup` → automatic `signInWithRedirect` fallback when popups are blocked.
+- Signed-in data syncs to **Cloud Firestore** — the **same `kazu/{uid}` document as v1**, so records continue seamlessly between v1 and v2 and across devices. Writes are debounced (2s) and flushed on tab hide / page leave / session end; the SDK's persistent local cache queues offline writes.
+- Entry is **local-mirror-first**: a returning cloud user boots straight into home from a localStorage mirror, then the Firestore copy (cache → server, with timeouts) syncs in the background — no loading screen.
+- **First sign-in promotes this device's guest records** to the cloud (nick becomes your Google display name); signing out returns you to your untouched guest profile.
+- **Guest mode** still works fully without an account: data stays in this device's `localStorage`. On first run v2 also **imports v1 guest records (`kazu-local`) read-only**; it never writes back to v1 keys.
+
+### Tech (v2)
+| Category | Details |
+|---|---|
+| **Runtime** | `dc-runtime.js` — declarative `<x-dc>` template + `DCLogic` component runtime; loads React 18.3.1 UMD from unpkg with SRI-pinned `<script>` tags (identical copy of Kanade's) |
+| **Data** | `kazu-duo-data.js` — number/counter/date data (270 cards, verbatim from v1) · KO/EN strings · utils, exposed as `window.__KAZU_DATA` |
+| **Fonts** | Google Fonts: **Jua** 400 · **M PLUS Rounded 1c** 500/700/800 |
+| **Auth / DB** | Firebase JS SDK **v12.14.0** (gstatic ESM, dynamic `import()`) — Google sign-in + Firestore `kazu/{uid}` shared with v1; forced long polling + persistent local cache (same hardening as v1) |
+| **Storage** | Guest: `localStorage` (`kazu-duo-*` keys, table below). Signed in: Firestore + a localStorage mirror for instant entry |
+| **Build** | None — static files, serve as-is |
+
+| localStorage key | Purpose |
+|---|---|
+| `kazu-duo-guest` | Guest study profile (`nick`, `stats`, `activity`, `bestCombo`) |
+| `kazu-duo-cloud` | Local mirror of the signed-in profile (instant boot before Firestore responds) |
+| `kazu-duo-mode` | `"guest"` or `"cloud"` — decides the entry path on the next visit |
+| `kazu-duo-setup` | Study settings (parts, question mode, hard mode, time limit) |
+| `kazu-duo-lang` / `kazu-duo-theme` / `kazu-duo-sound` | UI preferences |
+
+### File structure
+```
+kazu/
+├── index.html          # v2 app — Duolingo-style renewal (this is what kazu.clayborne.dev serves)
+├── dc-runtime.js       # declarative-component runtime used by index.html
+├── kazu-duo-data.js    # number/counter/date data + i18n module (window.__KAZU_DATA)
+└── 숫자_암기카드.html    # v1 "classic" app — still served; keeps Google sign-in + Firestore sync
+```
+
+> **v1 stays available** at [kazu.clayborne.dev/숫자_암기카드.html](https://kazu.clayborne.dev/%EC%88%AB%EC%9E%90_%EC%95%94%EA%B8%B0%EC%B9%B4%EB%93%9C.html) — it remains fully functional with the same cloud sync. **Everything below this line documents v1.**
+
+---
+
+# 📚 v1 (classic) documentation
+
+> ⚠️ In the v1 docs below, the app body previously named `index.html` is now **`숫자_암기카드.html`** (renamed when v2 took over the root). Everything else still applies to the classic app.
 
 A **single-file web app** for learning Japanese **numbers, counters, and date/time readings** through practice, quizzes, and review.
-It uses the same mechanics as Kanade (flashcards + quizzes + contribution-grid/error-rate stats + Korean/English + dark mode + speech).
+It uses the same mechanics as Kanade v1 (flashcards + quizzes + contribution-grid/error-rate stats + Korean/English + dark mode + speech).
 
-🔗 **Live:** https://clayborneyeounjunlee.github.io/kazu/
-
-- Single file: runs entirely from one [`index.html`](index.html) (no external build or bundle)
+- Single file: runs entirely from one [`숫자_암기카드.html`](숫자_암기카드.html) (no external build or bundle)
 - Data: **270 items / 24 parts** (verified by counting in the code)
   - **Numbers**: 0–10, tens (10–90), hundreds (100–900), thousands (1000–9000), 万·億
   - **Counters**: ～つ·個·人·本·枚·匹·台·冊·歳·杯·階·回·円
@@ -36,7 +104,7 @@ It uses the same mechanics as Kanade (flashcards + quizzes + contribution-grid/e
 |---|---|
 | Languages | Pure **HTML + CSS + JavaScript** (no framework or build tools) |
 | JS approach | **ES modules** (`<script type="module">`) — Firebase SDK loaded via dynamic `import()` |
-| Structure | **Single `index.html`** (~1,700 lines, with markup, styles, and scripts inlined) |
+| Structure | **Single `숫자_암기카드.html`** (~1,700 lines, with markup, styles, and scripts inlined) |
 | Styling | Inline `<style>` + theming based on **CSS variables (`:root` / `html[data-theme="dark"]`)** |
 | Fonts | Korean body text: `Pretendard`, `Apple SD Gothic Neo`, `Malgun Gothic`, `Noto Sans KR` / Japanese (kana & kanji): `Yu Gothic UI`, `Meiryo`, `Hiragino Kaku Gothic ProN`, `Noto Sans JP` (`--kana-font`; all with system-font fallbacks, no web-font CDN) |
 | Icon/favicon | Inline SVG data URI (a `数` character logo) |
@@ -133,7 +201,7 @@ function showScreen(name){
 
 ## 🗂️ Data
 
-All learning data lives statically inside `index.html` as a **`const DATA` object literal** (no external `.js` files, JSON, or server).
+All learning data lives statically inside `숫자_암기카드.html` as a **`const DATA` object literal** (no external `.js` files, JSON, or server).
 
 ### Category → part layout (`CATS`)
 
@@ -264,7 +332,7 @@ service cloud.firestore {
 
 | Dependency | Purpose | Key required | Where it goes |
 |---|---|---|---|
-| Firebase JS SDK (app/auth/firestore) `12.14.0` | Auth and cloud sync | Web config (public identifiers) | `FIREBASE_CONFIG` in `index.html` (already included) |
+| Firebase JS SDK (app/auth/firestore) `12.14.0` | Auth and cloud sync | Web config (public identifiers) | `FIREBASE_CONFIG` in `숫자_암기카드.html` (already included) |
 | Google sign-in (Firebase Auth Provider) | User authentication | — | Only the authorized domain needs registering in the Firebase Console (already approved via Kanade) |
 | Web Speech API (`SpeechSynthesis`) | `ja-JP` pronunciation playback | Not needed (built into the browser) | — |
 
@@ -317,8 +385,8 @@ Reuses the **same Firebase project** as Kanade (`japanese-site-a0af9`). Data is 
 ## 📁 File Structure
 
 ```
-kazu/
-├── index.html   # the entire app — markup + CSS (:root/dark variables) + JS (module)
+kazu/   # (v1-era layout — see the v2 file structure above for the current repo)
+├── 숫자_암기카드.html   # the entire v1 app — markup + CSS (:root/dark variables) + JS (module)
 │                #  · <head> inline: theme pre-apply script, meta/favicon
 │                #  · <style>: theme & component CSS (CSS-variable based)
 │                #  · markup for the 9 screen <section>s
@@ -332,11 +400,11 @@ kazu/
 └── README.md    # this document
 ```
 
-This repo contains only two files, `index.html` and `README.md` (no `package.json`, `firebase.json`, `.firebaserc`, `.gitignore`, or server code).
+In the v1 era this repo contained only the app file and `README.md` (no `package.json`, `firebase.json`, `.firebaserc`, `.gitignore`, or server code) — see the v2 section above for the current layout.
 
 ---
 
 ## 🔗 Related Apps (moa Hub · Sibling App)
 
-- **moa hub**: https://clayborneyeounjunlee.github.io/moa/ — reachable via the `◈` button in the app's top-right corner.
+- **Hub / portfolio**: https://clayborne.dev/ (the former moa hub was retired in its favor; the app's `◈` link points there)
 - **Kanade**: a Japanese learning app by the same author. Kazu reuses Kanade's **exact UI/mechanics** (flashcards, quizzes, contribution grid, Korean/English, dark mode, speech) and the **same Firebase project** (`japanese-site-a0af9`), but keeps its data in a separate collection (`kazu/{uid}` vs `users/{uid}`) so the two never interfere.
